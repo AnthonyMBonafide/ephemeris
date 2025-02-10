@@ -10,6 +10,25 @@ type Calendar struct {
 	Events []Event
 }
 
+func (c Calendar) String() string {
+	panic("TODO implement list of events")
+}
+
+func (c Calendar) StringForView(viewStart, viewEnd time.Time) {
+	panic("TODO implement list of events for given timeframe")
+}
+
+func (c Calendar) AsciiForView(viewStart, viewEnd time.Time) {
+	panic("TODO implement text user interface for viewing of events for the given timeframe in terminal/text")
+}
+
+// TODO: Rename to Rule and create another structure called event which has the
+// same data minus the Repeat. Also, add information to link Rule to an Event.
+// The Rule can be stored at the Calendar level and Events are derived from
+// Rules which are single items on a calendar, each of which can be managed
+// independently(canceled, skipped, etc(this will have to be managed at the
+// Rule level so that we can always derive the skip/cancel when creating the
+// events from Rules))
 type Event struct {
 	Start  time.Time
 	End    time.Time
@@ -17,42 +36,45 @@ type Event struct {
 	Repeat time.Duration
 }
 
+// Overlaps determines if two events overlap in the "active" window
+//
+// Can be used for testing to ensure squashing behaviour is correct as the result should be no overlaps
+func (e Event) Overlaps(other Event, startView, endView time.Time) bool {
+	// Expand the event out from its original start by doing repeats
+	panic("TODO implement")
+}
+
+// Expand creates events based on the original event by applying the repeating pattern.
+func (e Event) Expand(viewStart, viewEnd time.Time) []Event {
+	panic("TODO implement")
+}
+
 // 1. Get events that apply to the time view we are interested in
 // 1a. expand events(recurring events are expanded to specific events within a time span)
 // 2. order them(may need to think about adding priority here or ensuring we perserve order)
 // 3. Start with the beginning of the day and generate a consolidated report
-func (c *Calendar) DayView(view time.Time) []Event {
-	var dailyview []Event
-	for _, e := range c.Events {
-		if e.Start.After(view) || e.End.Before(view) {
-			// Filter out events that are not active in this view
-			continue
+func (c *Calendar) View(viewStart, viewEnd time.Time) []Event {
+	var results []Event
+	for _, evnt := range c.Events {
+		expandedEvents := evnt.Expand(viewStart, viewEnd)
+		for _, expandedEvent := range expandedEvents {
+			if (expandedEvent.Start.After(viewStart) || expandedEvent.Start.Equal(viewStart)) || (expandedEvent.End.Before(viewEnd) || expandedEvent.End.Equal(viewEnd)) {
+				// Filter out events that are not active in this view
+				continue
+			}
 		}
 
-		dailyview = append(dailyview, e)
+		results = append(results, evnt)
 	}
-
-	// TODO: Expand each recurring event
 
 	// Remove overlaps favoring later events
-	dailyview = RemoveOverlaps(dailyview)
+	results = CondenseOverlaps(results)
 
-	return dailyview
-}
-
-// CreateUnknownEvent returns an event which communicates that a specific time
-// slot has no events and no state can be determined due to the lack of data.
-func CreateUnknownEvent(start time.Time, end time.Time) Event {
-	return Event{
-		Start:  start,
-		End:    end,
-		Name:   "Unkown",
-		Repeat: 0,
-	}
+	return results
 }
 
 // removes all overlaps from a list of events
-func RemoveOverlaps(events []Event) []Event {
+func CondenseOverlaps(events []Event) []Event {
 	var result []Event
 	// TODO: Highly ineffecient but will work, need to do this better
 	//
@@ -80,8 +102,34 @@ func SquashEvents(e1 Event, e2 Event) []Event { // TODO: Make this return 2 slic
 		return []Event{e1, e2}
 	}
 
+	// no overlap matching start and end times
+	// Higher priority up top
+	//               |---------e2------|
+	// |------e1-----|
+	// Result
+	// |-------e1----|--------e2-------|
+	if e1.Start.Before(e2.Start) && e2.Start.Equal(e1.End) && e2.End.After(e1.End) {
+		return []Event{e1, e2}
+	}
+
 	// Same time span
-	if e1.Start.Equal(e2.Start) || e1.End.Equal(e2.End) {
+	if e1.Start.Equal(e2.Start) && e1.End.Equal(e2.End) {
+		return []Event{e2}
+	}
+
+	// Same Start different end
+	// |-----e2-----|
+	// |------e1---------|
+	if e1.Start.Equal(e2.Start) && e1.End.After(e2.End) {
+		e1.Start = e2.End
+		return []Event{e1, e2}
+	}
+
+	// Same Start different end
+	// |-------e2----------|
+	// |------e1-------|
+	if e1.Start.Equal(e2.Start) && e1.End.Before(e2.End) {
+		e1.Start = e2.End
 		return []Event{e2}
 	}
 
