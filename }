@@ -1,5 +1,0 @@
-
-### Viewing Events
-
-To view events within a specific timeframe, use the `View` method of the `Calendar` struct.
-

@@ -108,7 +108,7 @@ func (r Rule) Expand(viewStart, viewEnd time.Time) []Event {
 
 	// Go forwards to the viewEnd
 	evaluatingEndTime = r.End
-	for evaluatingStartTime := r.Start; evaluatingStartTime.Before(viewEnd); evaluatingStartTime = evaluatingStartTime.Add(r.RepeatDuration) {
+	for evaluatingStartTime := r.Start; evaluatingStartTime.Before(viewEnd) && evaluatingStartTime.Before(r.RepeatForwardUntil); evaluatingStartTime = evaluatingStartTime.Add(r.RepeatDuration) {
 		evaluatingEndTime = evaluatingEndTime.Add(r.RepeatDuration)
 		expandedEvents = append(expandedEvents, Event{
 			Start: evaluatingStartTime,

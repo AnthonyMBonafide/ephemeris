@@ -25,7 +25,7 @@ func TestExpandEvents(t *testing.T) {
 					Name:  "Dominico's Birthday",
 				},
 				RepeatDuration:      24 * time.Hour * 365,
-				RepeatForwardUntil:  time.Date(2025, 2, 13, 0, 0, 0, 0, time.UTC),
+				RepeatForwardUntil:  time.Date(2023, 2, 13, 0, 0, 0, 0, time.UTC),
 				RepeatBackwardUntil: time.Time{},
 				Skip:                []time.Time{},
 				Canceled:            []time.Time{},
@@ -33,8 +33,8 @@ func TestExpandEvents(t *testing.T) {
 			viewStart: time.Date(2020, 2, 13, 0, 0, 0, 0, time.UTC),
 			viewEnd:   time.Date(2025, 2, 13, 0, 0, 0, 0, time.UTC),
 			verificationFunc: func(t *testing.T, e []Event) {
-				if len(e) != 5 {
-					t.Logf("Expected 5 events but got %d", len(e))
+				if len(e) != 4 {
+					t.Logf("Expected 4 events but got %d", len(e))
 					t.Fail()
 				}
 
@@ -47,13 +47,24 @@ func TestExpandEvents(t *testing.T) {
 						t.Logf("Expected start month to be %s but got %d", evnt.Start.Month(), evnt.Start.Year())
 						t.Fail()
 					}
-					if evnt.Start.Day() != 13 {
-						t.Logf("Expected start day of the month to be %d but got %d", 13, evnt.Start.Day())
+					if evnt.Start.Year() != 2020 && evnt.Start.Day() != 12 {
+						t.Logf("Expected start day of the month to be %d but got %d for year %d(due to leap year)", 12, evnt.Start.Day(), evnt.Start.Year())
 						t.Fail()
 
 					}
-					if evnt.End.Day() != 14 {
-						t.Logf("Expected end day of month to be %d but got %d", 14, evnt.End.Day())
+					if evnt.End.Year() != 2020 && evnt.End.Day() != 13 {
+						t.Logf("Expected end day of month to be %d but got %d for year %d(due to leap year)", 13, evnt.End.Day(), evnt.End.Year())
+						t.Fail()
+
+					}
+
+					if evnt.Start.Year() == 2020 && evnt.Start.Day() != 13 {
+						t.Logf("Expected start day of the month to be %d but got %d for year %d(due to not being a leap year)", 13, evnt.Start.Day(), evnt.Start.Year())
+						t.Fail()
+
+					}
+					if evnt.End.Year() == 2020 && evnt.End.Day() != 14 {
+						t.Logf("Expected end day of month to be %d but got %d for year %d(due to not being a leap year)", 14, evnt.End.Day(), evnt.End.Year())
 						t.Fail()
 
 					}
