@@ -2,7 +2,6 @@ package calendar
 
 import (
 	"sort"
-	"time"
 )
 
 // PriorityBasedStrategy resolves overlaps by giving precedence to higher priority events
